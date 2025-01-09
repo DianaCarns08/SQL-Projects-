@@ -22,7 +22,7 @@ Welcome to my **SQL Projects Repository**! This repository contains various **SQ
 ---
 ### Project 2: Exploratory Data Analysis on Layoffs Data
 
-- **Script**: `Scripts/02_EDA_Layoffs_Data.sql`
+- **Script**: `Scripts/Exploratory_Data_Analysis_on_Layoffs_Data.sql`
 - **Dataset**: `Data/Layoffs_Data.csv`
 - **Description**:  
   This project performs **Exploratory Data Analysis (EDA)** on the cleaned layoffs dataset to uncover various **insights and patterns** in the data using SQL queries.
