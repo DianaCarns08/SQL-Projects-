@@ -1,0 +1,213 @@
+
+# 🛒 Supermarket Dataset: EDA and Data Wrangling Readme
+
+This document explains the **Exploratory Data Analysis (EDA)** and **Data Wrangling** process applied to the **Supermarket** dataset. It outlines the transformations made to clean and format the data and provides insights derived from the analysis.
+
+---
+
+## 📋 Data Description
+The dataset consists of transactional data from a supermarket, with columns representing various attributes such as:
+- **Invoice ID** – Unique identifier for each transaction.
+- **Branch** – Store location.
+- **City** – The city in which the branch is located.
+- **Customer Type** – Whether the customer is a member or a normal customer.
+- **Gender** – Gender of the customer.
+- **Product Line** – Category of products purchased.
+- **Quantity** – Number of items purchased.
+- **Unit Price** – Price of each item.
+- **Total** – Total bill amount.
+- **Payment** – Method of payment used (Cash, Credit Card, E-Wallet).
+- **Date** and **Time** – Transaction date and time.
+- **Gross Income** – Profit generated from the sale.
+
+---
+
+## 🛠 Data Wrangling Process
+The following steps were performed to clean and format the dataset:
+
+### ✅ Step 1: Checking the Dataset Schema
+The initial structure of the table was examined using the `DESCRIBE` statement:
+```sql
+DESCRIBE supermarket;
+```
+
+---
+
+### ✅ Step 2: Updating Column Types
+The column types were updated to ensure data consistency and accuracy. Here are the changes made:
+
+| **Column**               | **Old Data Type** | **New Data Type**      | **Reason for Change**                                          |
+|--------------------------|-------------------|------------------------|----------------------------------------------------------------|
+| Invoice ID               | `TEXT`            | `VARCHAR(20)`          | To ensure unique invoice numbers are stored efficiently.        |
+| Unit price               | `DOUBLE`          | `DECIMAL(10,2)`        | To ensure prices are stored with 2 decimal places.              |
+| Quantity                 | `TEXT`            | `INT`                  | To convert quantity values to integer type.                     |
+| Date                     | `TEXT`            | `DATE`                 | To properly handle date-related queries.                        |
+| Time                     | `TEXT`            | `TIME`                 | To handle time-based queries accurately.                        |
+| cogs (Cost of Goods Sold) | `DOUBLE`          | `DECIMAL(10,2)`        | To store values with 2 decimal places.                          |
+| Gross margin percentage   | `DOUBLE`          | `DECIMAL(10,6)`        | To ensure precise margin values are stored.                     |
+| Gross income             | `DOUBLE`          | `DECIMAL(10,6)`        | To store profit values with higher precision.                   |
+| Rating                   | `DOUBLE`          | `DECIMAL(10,6)`        | To ensure precise rating values are stored.                     |
+
+---
+
+### ✅ Step 3: Handling Date Formatting Issues
+The `Date` column was initially in **text format**, requiring conversion to a proper `DATE` format.
+
+1. **Create a backup of the original `Date` column:**
+   ```sql
+   ALTER TABLE supermarket
+   ADD COLUMN `Date Backup` VARCHAR(20);
+   ```
+
+2. **Copy the original date values into the backup column:**
+   ```sql
+   UPDATE supermarket
+   SET `Date Backup` = `Date`;
+   ```
+
+3. **Convert the `Date` column to `DATE` format:**
+   ```sql
+   UPDATE supermarket
+   SET `Date` = STR_TO_DATE(`Date`, '%m/%d/%Y');
+   ```
+
+4. **Change the `Date` column type to `DATE`:**
+   ```sql
+   ALTER TABLE supermarket
+   MODIFY COLUMN `Date` DATE;
+   ```
+
+---
+
+## 🔎 Key SQL Queries and Insights
+Here are some key queries performed during the EDA process and the insights derived from them:
+
+### **1. Most Popular Payment Method**
+```sql
+SELECT DISTINCT payment, COUNT(payment) AS Payment_Count
+FROM supermarket
+GROUP BY payment;
+```
+**Insight:** This query identifies the most frequently used payment method by customers.
+
+---
+
+### **2. Most Profitable Branch**
+```sql
+SELECT DISTINCT branch, AVG(`gross income`) AS Avg_Income
+FROM supermarket
+GROUP BY branch
+ORDER BY Avg_Income DESC;
+```
+**Insight:** This query shows which branch generates the highest average gross income.
+
+---
+
+### **3. Highest Revenue by Product Line**
+```sql
+SELECT `Product Line`, ROUND(SUM(Total), 2) AS Total_Revenue
+FROM supermarket
+GROUP BY `Product Line`
+ORDER BY Total_Revenue DESC;
+```
+**Insight:** This query identifies the product line that generates the highest total revenue.
+
+---
+
+### **4. Products Purchased per Invoice**
+```sql
+SELECT `Invoice ID`, SUM(Quantity) AS Products
+FROM supermarket
+GROUP BY `Invoice ID`
+ORDER BY 1;
+```
+**Insight:** This query shows how many products were purchased in each transaction.
+
+---
+
+### **5. Branch Expansion and Product Focus**
+```sql
+SELECT City, SUM(`gross income`) AS Income, SUM(Quantity) AS Products, (SUM(`gross income`) / SUM(Quantity)) AS Profit_per_Product
+FROM supermarket
+GROUP BY City
+ORDER BY Income DESC;
+```
+**Insight:** This query identifies the branch city where expansion should be considered and the products that should be emphasized for better profits.
+
+---
+
+### **6. Demographics by City**
+```sql
+SELECT City, Gender, COUNT(*) AS Total_Persons
+FROM supermarket
+GROUP BY City, Gender;
+```
+**Insight:** This query shows the gender distribution of customers across different cities.
+
+---
+
+### **7. Average Profit by City and Gender**
+```sql
+SELECT City, Gender, COUNT(*) AS Total_Persons, SUM(`gross income`) AS Total_Income, SUM(Quantity) AS Products_Sold, ROUND((SUM(`gross income`) / SUM(Quantity)), 2) AS Income_per_Product
+FROM supermarket
+GROUP BY City, Gender
+ORDER BY City, Total_Persons DESC;
+```
+**Insight:** This query provides insights into average profit and product sales by city and gender.
+
+---
+
+### **8. Profit by Month**
+```sql
+SELECT SUBSTRING(`Date`, 6, 2) AS Month, AVG(`gross income`) AS Avg_Profit
+FROM supermarket
+GROUP BY SUBSTRING(`Date`, 6, 2)
+ORDER BY Avg_Profit DESC;
+```
+**Insight:** This query shows the average profit generated per month.
+
+---
+
+### **9. Average Profit per Product Line by Month**
+```sql
+SELECT `Product Line`, SUBSTRING(`Date`, 6, 2) AS Month, AVG(`gross income`) AS Avg_Profit
+FROM supermarket
+GROUP BY `Product Line`, SUBSTRING(`Date`, 6, 2)
+ORDER BY `Product Line`;
+```
+**Insight:** This query identifies the average profit for each product line, grouped by month.
+
+---
+
+### **10. Product Line Purchases by Gender**
+```sql
+SELECT Gender, `Product Line`, COUNT(*) AS Purchases
+FROM supermarket
+GROUP BY `Product Line`, Gender
+ORDER BY `Product Line`;
+```
+**Insight:** This query provides information about product preferences based on gender.
+
+---
+
+### **11. Gender and Payment Type**
+```sql
+SELECT Gender, Payment, COUNT(*) AS Payment_Type
+FROM supermarket
+GROUP BY Gender, Payment
+ORDER BY Payment;
+```
+**Insight:** This query shows the relationship between customer gender and preferred payment methods.
+
+---
+
+## 📈 Summary of Findings
+- The **most popular payment method** is identified, helping the supermarket streamline payment processes.
+- The **most profitable branch** is highlighted, allowing for better resource allocation.
+- **Product line performance** insights help determine which categories contribute the most to revenue.
+- **Demographic analysis** by city and gender provides insights into customer behavior and preferences.
+- **Profit by month** and **product line analysis** guide the supermarket's inventory and marketing strategies.
+
+---
+
+This analysis ensures the **Supermarket dataset** is well-structured, cleaned, and provides valuable insights for decision-making.
